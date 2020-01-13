@@ -1,0 +1,11 @@
+# package directories
+node_modules
+jspm_packages
+
+# DynamoDB data
+.dynamodb
+.DS_Store
+rawData/
+
+# Serverless directories
+.serverless
