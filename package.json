@@ -1,5 +1,5 @@
 {
-  "name": "article-appsync",
+  "name": "content-appsync",
   "version": "1.0.0",
   "description": "",
   "main": "handler.js",
@@ -17,6 +17,7 @@
     "graphql": "^14.5.8",
     "serverless-appsync-plugin": "^1.2.0",
     "serverless-dynamodb-client": "0.0.2",
-    "serverless-dynamodb-local": "^0.2.38"
+    "serverless-dynamodb-local": "^0.2.38",
+    "serverless-pseudo-parameters": "^2.5.0"
   }
 }
