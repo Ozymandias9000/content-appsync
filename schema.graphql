@@ -1,0 +1,166 @@
+type ContentStoreArticle {
+  articleId: Int
+  authorId: Int
+  siteId: Int
+  url: String!
+  primaryTopicId: Int
+  primaryImage: AWSJSON
+  author: AWSJSON
+  body: String
+  createdAt: AWSTime
+  primaryTopic: String
+  secondaryTopicId: Int
+  modifiedDate: AWSTime
+  guid: String
+  publishedDate: AWSTime
+  postPayout: String
+  category: AWSJSON
+  updatedAt: AWSTime
+}
+
+type ContentStoreArticleConnection {
+  items: [ContentStoreArticle]
+  nextToken: String
+}
+
+input CreateContentStoreArticleInput {
+  articleId: Int
+  authorId: Int
+  siteId: Int
+  url: String!
+  primaryTopicId: Int
+  primaryImage: AWSJSON
+  author: AWSJSON
+  body: String
+  createdAt: AWSTime
+  primaryTopic: String
+  secondaryTopicId: Int
+  modifiedDate: AWSTime
+  guid: String
+  publishedDate: AWSTime
+  postPayout: String
+  category: AWSJSON
+  updatedAt: AWSTime
+}
+
+input DeleteContentStoreArticleInput {
+  url: String!
+}
+
+type Mutation {
+  createContentStoreArticle(input: CreateContentStoreArticleInput!): ContentStoreArticle
+  updateContentStoreArticle(input: UpdateContentStoreArticleInput!): ContentStoreArticle
+  deleteContentStoreArticle(input: DeleteContentStoreArticleInput!): ContentStoreArticle
+}
+
+type Query {
+  getContentStoreArticle(url: String!): ContentStoreArticle
+  listContentStoreArticles(
+    filter: TableContentStoreArticleFilterInput
+    limit: Int
+    nextToken: String
+  ): ContentStoreArticleConnection
+  queryContentStoreArticlesByArticleIdGlobalIndex(
+    articleId: Int!
+    first: Int
+    after: String
+  ): ContentStoreArticleConnection
+  queryContentStoreArticlesBySiteIdGlobalIndex(siteId: Int!, first: Int, after: String): ContentStoreArticleConnection
+  queryContentStoreArticlesByAuthorIdGlobalIndex(
+    authorId: Int!
+    first: Int
+    after: String
+  ): ContentStoreArticleConnection
+}
+
+input TableBooleanFilterInput {
+  ne: Boolean
+  eq: Boolean
+}
+
+input TableContentStoreArticleFilterInput {
+  articleId: TableIntFilterInput
+  authorId: TableIntFilterInput
+  siteId: TableIntFilterInput
+  url: TableStringFilterInput
+  primaryTopicId: TableIntFilterInput
+  body: TableStringFilterInput
+  createdAt: TableIntFilterInput
+  primaryTopic: TableStringFilterInput
+  secondaryTopicId: TableIntFilterInput
+  modifiedDate: TableIntFilterInput
+  guid: TableStringFilterInput
+  publishedDate: TableIntFilterInput
+  postPayout: TableStringFilterInput
+  updatedAt: TableIntFilterInput
+}
+
+input TableFloatFilterInput {
+  ne: Float
+  eq: Float
+  le: Float
+  lt: Float
+  ge: Float
+  gt: Float
+  contains: Float
+  notContains: Float
+  between: [Float]
+}
+
+input TableIDFilterInput {
+  ne: ID
+  eq: ID
+  le: ID
+  lt: ID
+  ge: ID
+  gt: ID
+  contains: ID
+  notContains: ID
+  between: [ID]
+  beginsWith: ID
+}
+
+input TableIntFilterInput {
+  ne: Int
+  eq: Int
+  le: Int
+  lt: Int
+  ge: Int
+  gt: Int
+  contains: Int
+  notContains: Int
+  between: [Int]
+}
+
+input TableStringFilterInput {
+  ne: String
+  eq: String
+  le: String
+  lt: String
+  ge: String
+  gt: String
+  contains: String
+  notContains: String
+  between: [String]
+  beginsWith: String
+}
+
+input UpdateContentStoreArticleInput {
+  articleId: Int
+  authorId: Int
+  siteId: Int
+  url: String!
+  primaryTopicId: Int
+  primaryImage: AWSJSON
+  author: AWSJSON
+  body: String
+  createdAt: AWSTime
+  primaryTopic: String
+  secondaryTopicId: Int
+  modifiedDate: AWSTime
+  guid: String
+  publishedDate: AWSTime
+  postPayout: String
+  category: AWSJSON
+  updatedAt: AWSTime
+}

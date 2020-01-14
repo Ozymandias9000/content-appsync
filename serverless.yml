@@ -16,15 +16,29 @@ service: content-appsync
 app: content-appsync
 org: fansided
 
-# You can pin your service to only deploy with a specific Serverless version
-# Check out our docs for more details
-# frameworkVersion: "=X.X.X"
-
 provider:
   name: aws
   runtime: nodejs12.x
   stage: ${opt:stage, self:custom.defaultStage}
   profile: ${self:custom.profiles.${self:provider.stage}}
+  apiKeys:
+    - ${self:service}-${opt:stage, self:provider.stage}-mainKey
+  environment:
+    DYNAMODB_TABLE_PREFIX: ${self:service}-${opt:stage, self:provider.stage}-
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:CreateTable
+        - dynamodb:DescribeTable
+      Resource:
+        'arn:aws:dynamodb:${opt:region,
+        self:provider.region}:#{AWS::AccountId}:table/${self:provider.environment.DYNAMODB_TABLE_PREFIX}*'
 
 custom:
   defaultStage: dev
@@ -32,6 +46,7 @@ custom:
     dev: fs-dev
     test: fs-test
     prod: fs-prod
+  # DynamoDB
   dynamodb:
     stages:
       - dev
@@ -46,8 +61,104 @@ custom:
     seed:
       test:
         sources:
-          - table: articleTable
+          - table: ArticleTable
             rawsources: [./ddb_data_export_1-10-20/seedData.json]
+  # AppSync
+  appSync:
+    # name: # defaults to api
+    # apiKey # only required for update-appsync/delete-appsync
+    authenticationType: API_KEY
+    # schema: # schema file or array of files to merge, defaults to schema.graphql
+    # Caching options. Disabled by default
+    # read more at https://aws.amazon.com/blogs/mobile/appsync-caching-transactions/
+    # and https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-appsync-apicache.html
+    # caching:
+    #   behavior: FULL_REQUEST_CACHING # or PER_RESOLVER_CACHING. Required
+    #   ttl: 3600 # The TTL of the cache. Optional. Default: 3600
+    #   atRestEncryption: # Bool, Optional. Enable at rest encryption. disabled by default.
+    #   transitEncryption: # Bool, Optional. Enable transit encryption. disabled by default.
+    #   type: 'T2_SMALL' # Cache instance size. Optional. Default: 'T2_SMALL'
+    logConfig:
+      loggingRoleArn: { Fn::GetAtt: [AppSyncLoggingServiceRole, Arn] } # Where AppSyncLoggingServiceRole is a role with CloudWatch Logs write access
+      level: ERROR # Logging Level: NONE | ERROR | ALL
+    # mappingTemplatesLocation: # defaults to mapping-templates
+    # mappingTemplates:
+    #   - dataSource: # data source name
+    #     type: # type name in schema (e.g. Query, Mutation, Subscription)
+    #     field: getUserInfo
+    #     # kind: UNIT (default, not required) or PIPELINE (required for pipeline resolvers)
+    #     functions: # array of functions if kind === 'PIPELINE'
+    #       -  # function name
+    #     request: # request mapping template name | defaults to {type}.{field}.request.vtl
+    #     response: # response mapping template name | defaults to {type}.{field}.response.vtl
+    #     # When caching is enaled with `PER_RESOLVER_CACHING`,
+    #     # the caching options of the resolver.
+    #     # Disabled by default.
+    #     # Accepted values:
+    #     # - `true`: cache enabled with global `ttl` and default `keys`
+    #     # - an object with the following keys:
+    #     #    - ttl: The ttl of this particular resolver. Optional. Defaults to global ttl
+    #     #    - keys: The keys to use for the cache. Optionnal. Defaults to a hash of the
+    #     #            $context.arguments and $context.identity
+    #     caching:
+    #       keys: # array. A list of VTL variables to use as cache key.
+    #         - '$context.identity.sub'
+    #         - '$context.arguments.id'
+    #       ttl: 1000 # override the ttl for this resolver. (default comes from global config)
+
+    #   - ${file({fileLocation}.yml)} # link to a file with arrays of mapping templates
+    # functionConfigurations:
+    #   - name: # function name
+    #     dataSource: # data source name
+    #     request: # request mapping template name | defaults to {name}.request.vtl
+    #     response: # reponse mapping template name | defaults to {name}.response.vtl
+    dataSources:
+      - type: AMAZON_DYNAMODB
+        name: Article Table # data source name
+        description: # DynamoDB Table Description
+        config:
+          tableName: { Ref: ArticleTable } # Where MyTable is a dynamodb table defined in Resources
+          # serviceRoleArn: { Fn::GetAtt: [AppSyncDynamoDBServiceRole, Arn] } # Where AppSyncDynamoDBServiceRole is an IAM role defined in Resources
+          # iamRoleStatements: # custom IAM Role statements for this DataSource. Ignored if `serviceRoleArn` is present. Auto-generated if both `serviceRoleArn` and `iamRoleStatements` are omitted
+          # - Effect: 'Allow'
+          #   Action:
+          #     - 'dynamodb:GetItem'
+          #   Resource:
+          #     - 'arn:aws:dynamodb:{REGION}:{ACCOUNT_ID}:myTable'
+          #     - 'arn:aws:dynamodb:{REGION}:{ACCOUNT_ID}:myTable/*'
+          # region: # Overwrite default region for this data source
+      # - type: AMAZON_ELASTICSEARCH
+      #   name: # data source name
+      #   description: 'ElasticSearch'
+      #   config:
+      #     endpoint: # required # "https://{DOMAIN}.{REGION}.es.amazonaws.com"
+      #     serviceRoleArn: { Fn::GetAtt: [AppSyncESServiceRole, Arn] } # Where AppSyncESServiceRole is an IAM role defined in Resources
+      #     iamRoleStatements: # custom IAM Role statements for this DataSource. Ignored if `serviceRoleArn` is present. Auto-generated if both `serviceRoleArn` and `iamRoleStatements` are omitted
+      #       - Effect: 'Allow'
+      #         Action:
+      #           - 'es:ESHttpGet'
+      #         Resource:
+      #           - 'arn:aws:es:{REGION}:{ACCOUNT_ID}:{DOMAIN}'
+    # substitutions: # allows to pass variables from here to velocity templates
+    #   # ${exampleVar1} will be replaced with given value in all mapping templates
+    #   exampleVar1: '${self:service.name}'
+    #   exampleVar2: { 'Fn::ImportValue': 'Some-external-stuff' }
+  appsync-offline:
+    port: 6000
+    dynamodb:
+      client:
+        # if endpoint is provided, no local database server is started and and appsync connects to the endpoint - e.g. serverless-dynamodb-local
+        endpoint: 'http://localhost:8000'
+        region: localhost
+        accessKeyId: a
+        secretAccessKey: a
+      server:
+        port: 8000
+        dbPath: './.dynamodb'
+        inMemory: false,
+        sharedDb: false,
+        delayTransientStatuses: false,
+        optimizeDbBeforeStartup: false,
 
 functions:
   hello:
@@ -57,8 +168,8 @@ plugins:
   - serverless-pseudo-parameters
   # - serverless-plugin-typescript
   - serverless-dynamodb-local
-  # - serverless-appsync-plugin
-  # - serverless-appsync-offline
+  - serverless-appsync-plugin
+  - serverless-appsync-offline
   - serverless-offline
 
 # you can add CloudFormation resource templates here
@@ -67,7 +178,7 @@ resources:
     usersTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: articleTable
+        TableName: ArticleTable
         AttributeDefinitions:
           - AttributeName: url
             AttributeType: S
