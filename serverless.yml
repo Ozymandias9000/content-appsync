@@ -14,7 +14,7 @@
 service: content-appsync
 # app and org for use with dashboard.serverless.com
 app: content-appsync
-org: nickmurphy
+org: fansided
 
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
@@ -47,7 +47,7 @@ custom:
       test:
         sources:
           - table: articleTable
-            rawsources: [./ddb_data_export_1-10-20/data1_formatted.json]
+            rawsources: [./ddb_data_export_1-10-20/seedData.json]
 
 functions:
   hello:
