@@ -7,5 +7,8 @@ jspm_packages
 .DS_Store
 rawData/
 
+# AppSync
+aws-exports.*
+
 # Serverless directories
 .serverless

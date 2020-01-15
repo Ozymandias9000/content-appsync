@@ -23,8 +23,6 @@ provider:
   profile: ${self:custom.profiles.${self:provider.stage}}
   apiKeys:
     - ${self:service}-${opt:stage, self:provider.stage}-mainKey
-  environment:
-    DYNAMODB_TABLE_PREFIX: ${self:service}-${opt:stage, self:provider.stage}-
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -36,9 +34,7 @@ provider:
         - dynamodb:DeleteItem
         - dynamodb:CreateTable
         - dynamodb:DescribeTable
-      Resource:
-        'arn:aws:dynamodb:${opt:region,
-        self:provider.region}:#{AWS::AccountId}:table/${self:provider.environment.DYNAMODB_TABLE_PREFIX}*'
+      Resource: 'arn:aws:dynamodb:${opt:region, self:provider.region}:#{AWS::AccountId}:table/*'
 
 custom:
   defaultStage: dev
@@ -65,84 +61,46 @@ custom:
             rawsources: [./ddb_data_export_1-10-20/seedData.json]
   # AppSync
   appSync:
-    # name: # defaults to api
+    name: Content-Store-API
     # apiKey # only required for update-appsync/delete-appsync
     authenticationType: API_KEY
-    # schema: # schema file or array of files to merge, defaults to schema.graphql
-    # Caching options. Disabled by default
-    # read more at https://aws.amazon.com/blogs/mobile/appsync-caching-transactions/
-    # and https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-appsync-apicache.html
-    # caching:
-    #   behavior: FULL_REQUEST_CACHING # or PER_RESOLVER_CACHING. Required
-    #   ttl: 3600 # The TTL of the cache. Optional. Default: 3600
-    #   atRestEncryption: # Bool, Optional. Enable at rest encryption. disabled by default.
-    #   transitEncryption: # Bool, Optional. Enable transit encryption. disabled by default.
-    #   type: 'T2_SMALL' # Cache instance size. Optional. Default: 'T2_SMALL'
-    logConfig:
-      loggingRoleArn: { Fn::GetAtt: [AppSyncLoggingServiceRole, Arn] } # Where AppSyncLoggingServiceRole is a role with CloudWatch Logs write access
-      level: ERROR # Logging Level: NONE | ERROR | ALL
-    # mappingTemplatesLocation: # defaults to mapping-templates
-    # mappingTemplates:
-    #   - dataSource: # data source name
-    #     type: # type name in schema (e.g. Query, Mutation, Subscription)
-    #     field: getUserInfo
-    #     # kind: UNIT (default, not required) or PIPELINE (required for pipeline resolvers)
-    #     functions: # array of functions if kind === 'PIPELINE'
-    #       -  # function name
-    #     request: # request mapping template name | defaults to {type}.{field}.request.vtl
-    #     response: # response mapping template name | defaults to {type}.{field}.response.vtl
-    #     # When caching is enaled with `PER_RESOLVER_CACHING`,
-    #     # the caching options of the resolver.
-    #     # Disabled by default.
-    #     # Accepted values:
-    #     # - `true`: cache enabled with global `ttl` and default `keys`
-    #     # - an object with the following keys:
-    #     #    - ttl: The ttl of this particular resolver. Optional. Defaults to global ttl
-    #     #    - keys: The keys to use for the cache. Optionnal. Defaults to a hash of the
-    #     #            $context.arguments and $context.identity
-    #     caching:
-    #       keys: # array. A list of VTL variables to use as cache key.
-    #         - '$context.identity.sub'
-    #         - '$context.arguments.id'
-    #       ttl: 1000 # override the ttl for this resolver. (default comes from global config)
-
-    #   - ${file({fileLocation}.yml)} # link to a file with arrays of mapping templates
-    # functionConfigurations:
-    #   - name: # function name
-    #     dataSource: # data source name
-    #     request: # request mapping template name | defaults to {name}.request.vtl
-    #     response: # reponse mapping template name | defaults to {name}.response.vtl
+    mappingTemplates:
+      # Queries
+      - dataSource: ArticleTable # data source name
+        type: Query # type name in schema (e.g. Query, Mutation, Subscription)
+        field: getContentStoreArticle
+      - dataSource: ArticleTable
+        type: Query
+        field: listContentStoreArticles
+      - dataSource: ArticleTable
+        type: Query
+        field: queryContentStoreArticlesByArticleIdGlobalIndex
+      - dataSource: ArticleTable
+        type: Query
+        field: queryContentStoreArticlesBySiteIdGlobalIndex
+      - dataSource: ArticleTable
+        type: Query
+        field: queryContentStoreArticlesByAuthorIdGlobalIndex
+        # Mutations
+      - dataSource: ArticleTable
+        type: Mutation
+        field: createContentStoreArticle
+      - dataSource: ArticleTable
+        type: Mutation
+        field: deleteContentStoreArticle
+      - dataSource: ArticleTable
+        type: Mutation
+        field: updateContentStoreArticle
     dataSources:
       - type: AMAZON_DYNAMODB
-        name: Article Table # data source name
-        description: # DynamoDB Table Description
+        name: ArticleTable # data source name
+        description: Article Table
         config:
-          tableName: { Ref: ArticleTable } # Where MyTable is a dynamodb table defined in Resources
-          # serviceRoleArn: { Fn::GetAtt: [AppSyncDynamoDBServiceRole, Arn] } # Where AppSyncDynamoDBServiceRole is an IAM role defined in Resources
-          # iamRoleStatements: # custom IAM Role statements for this DataSource. Ignored if `serviceRoleArn` is present. Auto-generated if both `serviceRoleArn` and `iamRoleStatements` are omitted
-          # - Effect: 'Allow'
-          #   Action:
-          #     - 'dynamodb:GetItem'
-          #   Resource:
-          #     - 'arn:aws:dynamodb:{REGION}:{ACCOUNT_ID}:myTable'
-          #     - 'arn:aws:dynamodb:{REGION}:{ACCOUNT_ID}:myTable/*'
-          # region: # Overwrite default region for this data source
-      # - type: AMAZON_ELASTICSEARCH
-      #   name: # data source name
-      #   description: 'ElasticSearch'
-      #   config:
-      #     endpoint: # required # "https://{DOMAIN}.{REGION}.es.amazonaws.com"
-      #     serviceRoleArn: { Fn::GetAtt: [AppSyncESServiceRole, Arn] } # Where AppSyncESServiceRole is an IAM role defined in Resources
-      #     iamRoleStatements: # custom IAM Role statements for this DataSource. Ignored if `serviceRoleArn` is present. Auto-generated if both `serviceRoleArn` and `iamRoleStatements` are omitted
-      #       - Effect: 'Allow'
-      #         Action:
-      #           - 'es:ESHttpGet'
-      #         Resource:
-      #           - 'arn:aws:es:{REGION}:{ACCOUNT_ID}:{DOMAIN}'
-    # substitutions: # allows to pass variables from here to velocity templates
-    #   # ${exampleVar1} will be replaced with given value in all mapping templates
-    #   exampleVar1: '${self:service.name}'
-    #   exampleVar2: { 'Fn::ImportValue': 'Some-external-stuff' }
+          # Local
+          # tableName: { Ref: ArticleTable } # Where MyTable is a dynamodb table defined in Resources
+          # Prod
+          tableName: content-store-${opt:stage, self:provider.stage}-Article
+
   appsync-offline:
     port: 6000
     dynamodb:
@@ -162,7 +120,7 @@ custom:
 
 functions:
   hello:
-    handler: handler.hello
+    handler: ./src/handler.hello
 
 plugins:
   - serverless-pseudo-parameters
@@ -171,20 +129,23 @@ plugins:
   - serverless-appsync-plugin
   - serverless-appsync-offline
   - serverless-offline
-
-# you can add CloudFormation resource templates here
-resources:
-  Resources:
-    usersTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ArticleTable
-        AttributeDefinitions:
-          - AttributeName: url
-            AttributeType: S
-        KeySchema:
-          - AttributeName: url
-            KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
+# Comment all below out for deploy;
+# use for local dev
+#
+# In prod, we don't want to create a new table;
+# we use existing DDB article table
+# resources:
+#   Resources:
+#     usersTable:
+#       Type: AWS::DynamoDB::Table
+#       Properties:
+#         TableName: ArticleTable
+#         AttributeDefinitions:
+#           - AttributeName: url
+#             AttributeType: S
+#         KeySchema:
+#           - AttributeName: url
+#             KeyType: HASH
+#         ProvisionedThroughput:
+#           ReadCapacityUnits: 1
+#           WriteCapacityUnits: 1

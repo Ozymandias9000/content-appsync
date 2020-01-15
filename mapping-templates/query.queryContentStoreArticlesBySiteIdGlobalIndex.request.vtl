@@ -1,0 +1,18 @@
+{
+  "version": "2017-02-28",
+  "operation": "Query",
+  "query": {
+    "expression": "#siteId = :siteId",
+    "expressionNames": {
+      "#siteId": "siteId",
+    },
+    "expressionValues": {
+      ":siteId": $util.dynamodb.toDynamoDBJson($ctx.args.siteId),
+    },
+  },
+  "index": "siteIdGlobalIndex",
+  "limit": $util.defaultIfNull($ctx.args.first, 20),
+  "nextToken": $util.toJson($util.defaultIfNullOrEmpty($ctx.args.after, null)),
+  "scanIndexForward": true,
+  "select": "ALL_ATTRIBUTES",
+}
