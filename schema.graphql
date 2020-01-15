@@ -7,15 +7,15 @@ type ContentStoreArticle {
   primaryImage: AWSJSON
   author: AWSJSON
   body: String
-  createdAt: AWSTime
+  createdAt: AWSTimestamp
   primaryTopic: String
   secondaryTopicId: Int
-  modifiedDate: AWSTime
+  modifiedDate: AWSTimestamp
   guid: String
-  publishedDate: AWSTime
+  publishedDate: AWSTimestamp
   postPayout: String
   category: AWSJSON
-  updatedAt: AWSTime
+  updatedAt: AWSTimestamp
 }
 
 type ContentStoreArticleConnection {
@@ -32,15 +32,15 @@ input CreateContentStoreArticleInput {
   primaryImage: AWSJSON
   author: AWSJSON
   body: String
-  createdAt: AWSTime
+  createdAt: AWSTimestamp
   primaryTopic: String
   secondaryTopicId: Int
-  modifiedDate: AWSTime
+  modifiedDate: AWSTimestamp
   guid: String
-  publishedDate: AWSTime
+  publishedDate: AWSTimestamp
   postPayout: String
   category: AWSJSON
-  updatedAt: AWSTime
+  updatedAt: AWSTimestamp
 }
 
 input DeleteContentStoreArticleInput {
@@ -154,13 +154,13 @@ input UpdateContentStoreArticleInput {
   primaryImage: AWSJSON
   author: AWSJSON
   body: String
-  createdAt: AWSTime
+  createdAt: AWSTimestamp
   primaryTopic: String
   secondaryTopicId: Int
-  modifiedDate: AWSTime
+  modifiedDate: AWSTimestamp
   guid: String
-  publishedDate: AWSTime
+  publishedDate: AWSTimestamp
   postPayout: String
   category: AWSJSON
-  updatedAt: AWSTime
+  updatedAt: AWSTimestamp
 }
