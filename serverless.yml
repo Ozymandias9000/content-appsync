@@ -97,26 +97,11 @@ custom:
         description: Article Table
         config:
           # Local
-          # tableName: { Ref: ArticleTable } # Where MyTable is a dynamodb table defined in Resources
+          tableName: { Ref: ArticleTable } # Where MyTable is a dynamodb table defined in Resources
           # Prod
-          tableName: content-store-${opt:stage, self:provider.stage}-Article
-
-  appsync-offline:
-    port: 6000
-    dynamodb:
-      client:
-        # if endpoint is provided, no local database server is started and and appsync connects to the endpoint - e.g. serverless-dynamodb-local
-        endpoint: 'http://localhost:8000'
-        region: localhost
-        accessKeyId: a
-        secretAccessKey: a
-      server:
-        port: 8000
-        dbPath: './.dynamodb'
-        inMemory: false,
-        sharedDb: false,
-        delayTransientStatuses: false,
-        optimizeDbBeforeStartup: false,
+          # tableName: content-store-${opt:stage, self:provider.stage}-Article
+  appsync-simulator:
+    apiKey: d41d8cd98f00b204e9800998ecf8427e
 
 functions:
   hello:
@@ -127,25 +112,25 @@ plugins:
   # - serverless-plugin-typescript
   - serverless-dynamodb-local
   - serverless-appsync-plugin
-  - serverless-appsync-offline
+  - serverless-appsync-simulator
   - serverless-offline
 # Comment all below out for deploy;
 # use for local dev
 #
 # In prod, we don't want to create a new table;
 # we use existing DDB article table
-# resources:
-#   Resources:
-#     usersTable:
-#       Type: AWS::DynamoDB::Table
-#       Properties:
-#         TableName: ArticleTable
-#         AttributeDefinitions:
-#           - AttributeName: url
-#             AttributeType: S
-#         KeySchema:
-#           - AttributeName: url
-#             KeyType: HASH
-#         ProvisionedThroughput:
-#           ReadCapacityUnits: 1
-#           WriteCapacityUnits: 1
+resources:
+  Resources:
+    usersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ArticleTable
+        AttributeDefinitions:
+          - AttributeName: url
+            AttributeType: S
+        KeySchema:
+          - AttributeName: url
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
